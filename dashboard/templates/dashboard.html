@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenManus Dashboard</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-container">
+                <img src="/static/img/logo.svg" alt="OpenManus Logo" class="logo">
+                <h1>OpenManus Dashboard</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#" class="active" data-tab="dashboard-tab">Dashboard</a></li>
+                    <li><a href="#" data-tab="agents-tab">Agents</a></li>
+                    <li><a href="#" data-tab="logs-tab">Logs</a></li>
+                    <li><a href="#" data-tab="config-tab">Configuration</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <main>
+            <!-- Dashboard Tab -->
+            <section id="dashboard-tab" class="tab-content active">
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>System Status</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="status-item">
+                                <span class="status-label">Status:</span>
+                                <span class="status-value">
+                                    <span class="status-indicator active"></span>
+                                    Active
+                                </span>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-label">Workspace:</span>
+                                <span class="status-value" id="workspace-path">{{ config.workspace_path }}</span>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-label">LLM Models:</span>
+                                <span class="status-value" id="llm-models">
+                                    {% for model in config.llm_models %}
+                                        <span class="tag">{{ model }}</span>
+                                    {% endfor %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>Recent Activity</h2>
+                        </div>
+                        <div class="card-body">
+                            <div id="activity-feed">
+                                <div class="activity-placeholder">
+                                    No recent activity
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card wide">
+                        <div class="card-header">
+                            <h2>Quick Actions</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="quick-actions">
+                                <button class="action-button primary" id="run-manus">Run Manus Agent</button>
+                                <button class="action-button" id="run-browser">Run Browser Agent</button>
+                                <button class="action-button" id="run-mcp">Run MCP Agent</button>
+                                <button class="action-button" id="run-data">Run Data Analysis</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card wide">
+                        <div class="card-header">
+                            <h2>Usage Statistics</h2>
+                        </div>
+                        <div class="card-body chart-container">
+                            <canvas id="usage-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Agents Tab -->
+            <section id="agents-tab" class="tab-content">
+                <div class="agents-grid">
+                    {% for agent in agents %}
+                    <div class="agent-card">
+                        <div class="agent-header">
+                            <h3>{{ agent.name }}</h3>
+                            <span class="agent-status">Ready</span>
+                        </div>
+                        <div class="agent-description">
+                            <p>{{ agent.description }}</p>
+                        </div>
+                        <div class="agent-actions">
+                            <button class="run-agent-button" data-agent="{{ agent.name }}">Run Agent</button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div id="agent-prompt-modal" class="modal">
+                    <div class="modal-content">
+                        <span class="close">&times;</span>
+                        <h2>Run <span id="selected-agent-name"></span></h2>
+                        <form id="agent-prompt-form">
+                            <div class="form-group">
+                                <label for="agent-prompt">Enter your prompt:</label>
+                                <textarea id="agent-prompt" rows="5" required></textarea>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="action-button primary">Run</button>
+                                <button type="button" class="action-button cancel">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Logs Tab -->
+            <section id="logs-tab" class="tab-content">
+                <div class="logs-header">
+                    <h2>System Logs</h2>
+                    <div class="logs-actions">
+                        <select id="log-filter">
+                            <option value="all">All Levels</option>
+                            <option value="info">Info</option>
+                            <option value="warning">Warning</option>
+                            <option value="error">Error</option>
+                        </select>
+                        <button id="clear-logs" class="action-button">Clear Logs</button>
+                    </div>
+                </div>
+                <div class="logs-container">
+                    <div id="logs-output" class="logs-output"></div>
+                </div>
+            </section>
+
+            <!-- Configuration Tab -->
+            <section id="config-tab" class="tab-content">
+                <div class="config-section">
+                    <h2>System Configuration</h2>
+                    <div class="config-info">
+                        <div class="config-item">
+                            <span class="config-label">Workspace Directory:</span>
+                            <span class="config-value">{{ config.workspace_path }}</span>
+                        </div>
+                        <div class="config-item">
+                            <span class="config-label">Available LLM Models:</span>
+                            <div class="config-value">
+                                {% for model in config.llm_models %}
+                                    <span class="tag">{{ model }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="config-section">
+                    <h2>Agent Execution</h2>
+                    <form id="config-form">
+                        <div class="form-group">
+                            <label for="max-steps">Maximum Steps:</label>
+                            <input type="number" id="max-steps" min="1" max="100" value="20">
+                        </div>
+                        <div class="form-group">
+                            <label for="timeout">Execution Timeout (seconds):</label>
+                            <input type="number" id="timeout" min="10" max="3600" value="300">
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="action-button primary">Save Configuration</button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Agent Execution View -->
+            <section id="execution-view" class="execution-view hidden">
+                <div class="execution-header">
+                    <h2>Running: <span id="running-agent-name">Agent</span></h2>
+                    <button class="close-execution">&times;</button>
+                </div>
+                <div class="execution-content">
+                    <div class="execution-prompt">
+                        <h3>Prompt:</h3>
+                        <div id="execution-prompt-text"></div>
+                    </div>
+                    <div class="execution-output">
+                        <h3>Output:</h3>
+                        <div id="execution-output-text"></div>
+                    </div>
+                </div>
+                <div class="execution-footer">
+                    <button id="stop-execution" class="action-button">Stop Execution</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>

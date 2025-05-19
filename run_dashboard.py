@@ -9,7 +9,7 @@ sys.path.append(str(project_root))
 if __name__ == "__main__":
     # Change to dashboard directory and run the server
     dashboard_dir = project_root / "dashboard"
-    os.chdir(dashboard_dir)
+    os.chdir(str(dashboard_dir.resolve()))
     
     # Create workspace directory if it doesn't exist
     from app.config import config

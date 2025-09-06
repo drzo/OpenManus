@@ -8,6 +8,15 @@ sys.path.append(str(project_root))
 
 if __name__ == "__main__":
     # Change to dashboard directory and run the server
+    # Install chart visualization dependencies if needed
+    chart_viz_dir = Path(__file__).parent / "app" / "tool" / "chart_visualization"
+    if chart_viz_dir.exists() and (chart_viz_dir / "package.json").exists():
+        print("Installing chart visualization dependencies...")
+        subprocess.run([
+            sys.executable, "-c", 
+            f"import os, subprocess; os.chdir(r'{chart_viz_dir.absolute()}'); subprocess.run(['npm', 'install'])"
+        ], check=False)
+    
     dashboard_dir = project_root / "dashboard"
     os.chdir(str(dashboard_dir.resolve()))
     
